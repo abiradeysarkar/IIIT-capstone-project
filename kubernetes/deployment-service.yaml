@@ -1,0 +1,57 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: upgloadme
+  namespace: demo
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 3
+  selector:
+    matchLabels:
+      app: upgloadme
+  template:
+    metadata:
+      name: upgloadme
+      labels:
+         app: upgloadme
+    spec:
+      tolerations:
+      - key: "capstone-node"
+        value: "true"
+        effect: NoSchedule
+      containers:
+      - name: upgloadme
+        image: '381372271377.dkr.ecr.us-east-1.amazonaws.com/capstone-node-web:latest'
+        # cpu and memory usage
+        resources:
+          requests:
+            cpu: 800m
+            memory: 400Mi
+          limits:
+            cpu: 1000m
+            memory: 400Mi
+        imagePullPolicy: Always
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 10
+      dnsPolicy: ClusterFirst
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: upgloadme
+  namespace: demo
+spec:
+  selector:
+    app: upgloadme
+  type: LoadBalancer
+  ports:
+  - name: app-port
+    protocol: TCP
+    port: 80
+    targetPort: 8081
